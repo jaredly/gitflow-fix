@@ -39,6 +39,7 @@ export type Ticket = {
 };
 
 export type PullRequest = {
+  owner: string,
   number: number,
   summary: "string",
   reviewStatus: "waiting" | "accepted" | "rejected",
@@ -72,14 +73,13 @@ export type Selection =
     };
 
 export type State = {
-  selection: ?Selection,
   tickets: Array<Ticket>,
   pullRequests: Array<PullRequest>,
-  localBranches: Array<LocalBranch>
+  actors: Array<Actor>,
+  nextVersion: string
 };
 
 export const initialState: State = {
-  selection: null,
   tickets: [
     {
       id: 1,
@@ -95,11 +95,47 @@ export const initialState: State = {
     }
   ],
   pullRequests: [],
-  localBranches: []
+  actors: [
+    {
+      type: "dev",
+      name: "jared",
+      env: { localBranches: [], activeBranch: "develop" }
+    },
+    {
+      type: "dev",
+      name: "lilli",
+      env: { localBranches: [], activeBranch: "develop" }
+    },
+    {
+      type: "qe",
+      name: "robert"
+    },
+    {
+      type: "pm",
+      name: "susan"
+    }
+  ],
+  nextVersion: "7.0.0"
 };
 
-type Person = {
-  login: string
+export type Actor =
+  | {
+      type: "dev",
+      name: string,
+      env: DevEnv
+    }
+  | {
+      type: "pm",
+      name: string
+    }
+  | {
+      type: "qe",
+      name: string
+    };
+
+export type DevEnv = {
+  localBranches: Array<LocalBranch>,
+  activeBranch: string
 };
 
 // const findUnclaimedTicket = (state: State) => {
@@ -111,7 +147,7 @@ type Person = {
 //   return null;
 // }
 
-// const takeTicket = (me: Person, state: State) => {
+// const takeTicket = (me: Actor, state: State) => {
 //   const ticket = findUnclaimedTicket(state);
 //   if (!ticket) {
 //     return null

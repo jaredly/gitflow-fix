@@ -1,14 +1,14 @@
 // @flow
 
-import type { State } from "./types";
+import type { State, Ticket, PullRequest, Actor } from "./types";
 
 export const ticketActions = (
   id: number,
   state: State
 ): Array<{
   title: string,
-  type: "issue",
-  id: string,
+  type: "ticket",
+  id: number,
   action: string,
   role: "pm" | "dev" | "qe"
 }> => {
@@ -27,7 +27,68 @@ export const ticketActions = (
     actions.push({ title: "QE Accept", action: "accept", role: "qe" });
     actions.push({ title: "QE Reject", action: "reject", role: "qe" });
   }
-  return actions.map(action => ({ ...action, type: "issue", id }));
+  return actions.map(action => ({ ...action, type: "ticket", id }));
+};
+
+const replaceTicket = (state, id, ticket) => ({
+  ...state,
+  tickets: state.tickets.map(t => (t.id === id ? ticket : t))
+});
+
+export const applyTicketAction = (
+  id: number,
+  who: Actor,
+  action: string,
+  state: State
+): State => {
+  const ticket = state.tickets.find(ticket => ticket.id === id);
+  if (!ticket) {
+    console.log("ticket not found");
+    return state;
+  }
+  switch (action) {
+    case "prioritize":
+      return replaceTicket(state, id, {
+        ...ticket,
+        fixVersion: state.nextVersion
+      });
+    case "start":
+      if (who.type !== "dev") {
+        throw new Error("only devs can start on a ticket");
+      }
+      return replaceTicket(
+        {
+          ...state,
+          person: state.actors.map(p =>
+            p.name != who.name
+              ? p
+              : {
+                  ...who,
+                  env: {
+                    ...who.env,
+                    localBranches: who.env.localBranches.concat([
+                      {
+                        ticket: id,
+                        pr: null,
+                        name: "MOB-" + id,
+                        upstream: "develop",
+                        parent: "develop"
+                      }
+                    ])
+                  }
+                }
+          )
+        },
+        id,
+        {
+          ...ticket,
+          status: "in progress",
+          assignee: "me"
+        }
+      );
+  }
+  console.log("action not recongized");
+  return state;
 };
 
 // export const branchActions

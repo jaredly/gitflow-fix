@@ -4,11 +4,21 @@ import "./App.css";
 import {
   initialState,
   statuses,
+  type Selection,
   type State,
   type Ticket as TicketT
 } from "./types";
 
-import { ticketActions } from "./actions";
+import { ticketActions, applyTicketAction } from "./actions";
+
+const Strut = ({ size }) => <div style={{ flexBasis: size }} />;
+
+const styles = {
+  label: {
+    fontSize: "80%",
+    color: "#ccc"
+  }
+};
 
 const Ticket = ({ ticket, onSelect, selection }) => {
   return (
@@ -18,26 +28,24 @@ const Ticket = ({ ticket, onSelect, selection }) => {
         border: "1px solid #aaa",
         padding: "8px",
         fontSize: "80%",
-        boxShadow: selection && selection.type === 'ticket' && selection.ticket === ticket.id
-        ? '0 0 5px #aaa' : ''
+        boxShadow:
+          selection &&
+          selection.type === "ticket" &&
+          selection.ticket === ticket.id
+            ? "0 0 5px #aaa"
+            : ""
       }}
     >
-      <div
-        style={{
-          fontSize: "80%",
-          color: "#ccc",
-          alignSelf: "flex-start",
-          marginBottom: 4
-        }}
-      >
-        {"MOB-" + ticket.id}
-      </div>
+      <div style={styles.label}>{"MOB-" + ticket.id}</div>
+      <Strut size={4} />
       {ticket.title}
+      <Strut size={4} />
+      <div style={styles.label}>Fix version: {ticket.fixVersion}</div>
     </div>
   );
 };
 
-function Columns({ state, setSelection }) {
+function Columns({ state, setSelection, selection }) {
   return (
     <div style={{ padding: "4px", flexDirection: "row", height: 300 }}>
       {statuses.map(status => (
@@ -58,7 +66,7 @@ function Columns({ state, setSelection }) {
               .filter(ticket => ticket.status === status)
               .map(ticket => (
                 <Ticket
-                selection={state.selection}
+                  selection={selection}
                   key={ticket.id}
                   ticket={ticket}
                   onSelect={() =>
@@ -73,55 +81,77 @@ function Columns({ state, setSelection }) {
   );
 }
 
-const actionsForSelection = (state: State) => {
-  if (!state.selection) {
+const actionsForSelection = (state: State, selection: ?Selection) => {
+  if (!selection) {
     return [];
   }
-  switch (state.selection.type) {
+  switch (selection.type) {
     case "ticket":
-      return ticketActions(state.selection.ticket, state);
+      return ticketActions(selection.ticket, state);
     default:
       return [];
   }
 };
 
-const Actions = ({ state, takeAction }) => {
-  const actions = actionsForSelection(state); // todo include release & ci actions
+const Actor = ({ state, actor, actions, takeAction }) => {
+  const applicable = actions.filter(action => action.role === actor.type);
+  if (!applicable.length) {
+    return null;
+  }
   return (
-    <div style={{height: 200, overflow: 'auto'}}>
-      {actions.map(action => (
-        <div key={action.action}>
-          {action.type + '-'} 
-          {action.action}
-          <button onClick={() => takeAction(action)}>
-            Take Action
-          </button>
-        </div>
+    <div>
+      <div>Actor: {actor.name}</div>
+      <div>
+        {applicable.map(action => (
+          <div key={action.action}>
+            {action.type + "-"}
+            {action.action}
+            <button onClick={() => takeAction({ action, who: actor })}>
+              Take Action
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const Actions = ({ state, selection, takeAction }) => {
+  const actions = actionsForSelection(state, selection); // todo include release & ci actions
+  return (
+    <div style={{ height: 200, overflow: "auto" }}>
+      {state.actors.map(actor => (
+        <Actor
+          key={actor.name}
+          state={state}
+          actions={actions}
+          actor={actor}
+          takeAction={takeAction}
+        />
       ))}
     </div>
   );
 };
 
-const reducer = (state: State, action) => {
+const reducer = (state: State, { action, who }) => {
   switch (action.type) {
-    case "selection":
-      return { ...state, selection: action.selection };
+    case "ticket":
+      return applyTicketAction(action.id, who, action.action, state);
   }
   return state;
 };
 
 function App() {
   const [state, dispatch] = React.useReducer(reducer, initialState);
+  const [selection, setSelection] = React.useState(null);
   return (
     <div className="App">
-      {/* <header className="App-header">
-        Ok
-      </header> */}
       <Columns
         state={state}
-        setSelection={selection => dispatch({ type: "selection", selection })}
+        setSelection={setSelection}
+        selection={selection}
       />
-      <Actions state={state} takeAction={dispatch} />
+      <Actions state={state} selection={selection} takeAction={dispatch} />
     </div>
   );
 }

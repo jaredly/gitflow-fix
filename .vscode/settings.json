@@ -1,5 +1,6 @@
 {
     "eslint.enable": false,
     "gitlens.codeLens.enabled": false,
-    "gitlens.codeLens.authors.enabled": false
+    "gitlens.codeLens.authors.enabled": false,
+    "editor.formatOnSave": true
 }
