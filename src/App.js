@@ -29,6 +29,7 @@ const Ticket = ({ ticket, onSelect, selection, state }) => {
     ["Fix version", ticket.fixVersion],
     ["Assignee", ticket.assignee],
     ["Target branch", ticket.targetBranch],
+    ["Pull Request", ticket.pullRequest],
   ];
   return (
     <div
@@ -397,6 +398,7 @@ const PullRequests = ({
               }}
             >
               {pr.summary}
+              <div style={{ padding: 4 }}>{pr.reviewStatus}</div>
               <ActionsBadge
                 state={state}
                 selection={{ type: "pr", pr: pr.number }}
@@ -427,12 +429,31 @@ function App() {
             {outerState.states.map((inner, i) => (
               <div
                 key={i}
+                tabIndex={0}
+                // onFocus={() => }
+                // ref={node =>
+                //   i === outerState.position ? node && node.focus() : null
+                // }
+                onKeyDown={evt => {
+                  console.log(evt.key);
+                  if (evt.key === "ArrowDown") {
+                    dispatch({
+                      type: "state-history",
+                      position: Math.min(i + 1, outerState.states.length - 1),
+                    });
+                  } else if (evt.key === "ArrowUp") {
+                    dispatch({
+                      type: "state-history",
+                      position: Math.max(0, i - 1),
+                    });
+                  }
+                }}
                 style={{
                   padding: "4px 8px",
                   cursor: "pointer",
                   backgroundColor: i === outerState.position ? "#555" : "",
                 }}
-                onClick={() => dispatch({ type: "state-history", position: i })}
+                onFocus={() => dispatch({ type: "state-history", position: i })}
               >
                 {new Date(inner.date).toLocaleTimeString()}
               </div>

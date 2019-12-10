@@ -72,7 +72,9 @@ export const applyBranchAction = (
         ),
         tickets: branch.ticket
           ? state.tickets.map(t =>
-              t.id === branch.ticket ? { ...t, status: "in review" } : t,
+              t.id === branch.ticket
+                ? { ...t, status: "in review", pullRequest: prNumber }
+                : t,
             )
           : state.tickets,
         pullRequests: state.pullRequests.concat([
