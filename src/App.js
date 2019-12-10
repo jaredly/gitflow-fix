@@ -6,18 +6,25 @@ import {
   statuses,
   type Selection,
   type State,
-  type Ticket as TicketT
+  type Ticket as TicketT,
+  type Actor as ActorT,
 } from "./types";
 
-import { ticketActions, applyTicketAction } from "./actions";
+import {
+  ticketActions,
+  applyTicketAction,
+  branchActions,
+  applyBranchAction,
+  type Action,
+} from "./actions";
 
 const Strut = ({ size }) => <div style={{ flexBasis: size }} />;
 
 const styles = {
   label: {
     fontSize: "80%",
-    color: "#ccc"
-  }
+    color: "#ccc",
+  },
 };
 
 const Ticket = ({ ticket, onSelect, selection }) => {
@@ -33,7 +40,7 @@ const Ticket = ({ ticket, onSelect, selection }) => {
           selection.type === "ticket" &&
           selection.ticket === ticket.id
             ? "0 0 5px #aaa"
-            : ""
+            : "",
       }}
     >
       <div style={styles.label}>{"MOB-" + ticket.id}</div>
@@ -55,7 +62,7 @@ function Columns({ state, setSelection, selection }) {
             border: "1px solid #aaa",
             margin: "4px",
             padding: "8px",
-            width: 90
+            width: 90,
           }}
         >
           <div style={{ textAlign: "center", marginBottom: "8px" }}>
@@ -81,49 +88,134 @@ function Columns({ state, setSelection, selection }) {
   );
 }
 
-const actionsForSelection = (state: State, selection: ?Selection) => {
+const actionsForSelection = (
+  state: State,
+  selection: ?Selection,
+): Array<Action> => {
   if (!selection) {
     return [];
   }
   switch (selection.type) {
     case "ticket":
-      return ticketActions(selection.ticket, state);
+      const ticket = state.tickets.find(
+        ticket => ticket.id === selection.ticket,
+      );
+      if (!ticket) {
+        return [];
+      }
+      return ticketActions(ticket, state);
+    case "branch":
+      const owner = state.actors.find(
+        actor => actor.name === selection.owner && actor.type === "dev",
+      );
+      if (!owner || owner.type !== "dev") {
+        return [];
+      }
+      const branch = owner.env.localBranches.find(
+        branch => branch.name === selection.branch,
+      );
+      if (!branch) {
+        return [];
+      }
+      return branchActions(owner.name, branch, state);
     default:
       return [];
   }
 };
 
-const Actor = ({ state, actor, actions, takeAction }) => {
-  const applicable = actions.filter(action => action.role === actor.type);
+const isActionApplicable = (action, actor) => {
+  switch (action.type) {
+    case "branch":
+      return action.owner === actor.name;
+    case "ticket":
+      return action.role === actor.type;
+  }
+};
+
+const Actor = ({
+  state,
+  actor,
+  actions,
+  takeAction,
+  selection,
+  setSelection,
+}: {
+  state: State,
+  actor: ActorT,
+  actions: Array<Action>,
+  selection: ?Selection,
+  setSelection: Selection => void,
+  takeAction: (action: { who: ActorT, action: Action }) => void,
+}) => {
+  const applicable = actions.filter(action =>
+    isActionApplicable(action, actor),
+  );
   // if (!applicable.length) {
   //   return null;
   // }
   return (
-    <div>
-      <div>
-        {actor.type}: {actor.name}
-      </div>
-      <div>
+    <div style={{ alignItems: "flex-start" }}>
+      <div
+        style={{
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignSelf: "stretch",
+        }}
+      >
+        <div>
+          {actor.type}: {actor.name}
+        </div>
         {applicable.map(action => (
-          <div key={action.action}>
-            {action.type + "-"}
-            {action.action}
+          <div
+            key={action.action}
+            style={{
+              flexDirection: "row",
+            }}
+          >
             <button onClick={() => takeAction({ action, who: actor })}>
-              Take Action
+              {action.title}
             </button>
           </div>
         ))}
       </div>
+      <div></div>
+      {actor.type === "dev"
+        ? actor.env.localBranches.map(branch => (
+            <div
+              key={branch.name}
+              style={{
+                padding: 4,
+                backgroundColor:
+                  selection &&
+                  selection.type === "branch" &&
+                  selection.branch === branch.name
+                    ? "#666"
+                    : "",
+              }}
+              onClick={() => {
+                setSelection({
+                  type: "branch",
+                  branch: branch.name,
+                  owner: actor.name,
+                });
+              }}
+            >
+              {branch.name}
+            </div>
+          ))
+        : null}
     </div>
   );
 };
 
-const Actions = ({ state, selection, takeAction }) => {
+const Actions = ({ state, selection, setSelection, takeAction }) => {
   const actions = actionsForSelection(state, selection); // todo include release & ci actions
   return (
     <div style={{ height: 200, overflow: "auto" }}>
       {state.actors.map(actor => (
         <Actor
+          setSelection={setSelection}
+          selection={selection}
           key={actor.name}
           state={state}
           actions={actions}
@@ -139,12 +231,22 @@ const reducer = (state: State, { action, who }) => {
   switch (action.type) {
     case "ticket":
       return applyTicketAction(action.id, who, action.action, state);
+    case "branch":
+      return applyBranchAction(who, action.branch, action.action, state);
   }
   return state;
 };
 
+const logger = inner => (state, action) => {
+  const newState = inner(state, action);
+  console.log(action);
+  console.log(newState);
+  return newState;
+};
+
 function App() {
-  const [state, dispatch] = React.useReducer(reducer, initialState);
+  const [state, dispatch] = React.useReducer(logger(reducer), initialState);
+  console.log("state", state);
   const [selection, setSelection] = React.useState(null);
   return (
     <div className="App">
@@ -153,7 +255,12 @@ function App() {
         setSelection={setSelection}
         selection={selection}
       />
-      <Actions state={state} selection={selection} takeAction={dispatch} />
+      <Actions
+        setSelection={setSelection}
+        state={state}
+        selection={selection}
+        takeAction={dispatch}
+      />
     </div>
   );
 }

@@ -41,7 +41,7 @@ export type Ticket = {
 export type PullRequest = {
   owner: string,
   number: number,
-  summary: "string",
+  summary: string,
   reviewStatus: "waiting" | "accepted" | "rejected",
   ticket: ?number,
   merged: boolean,
@@ -65,6 +65,7 @@ export type Selection =
     }
   | {
       type: "branch",
+      owner: string,
       branch: string,
     }
   | {
@@ -81,14 +82,14 @@ export type Build = {
   prs: Array<number>,
 };
 
-export type State = {
+export type State = {|
   tickets: Array<Ticket>,
   pullRequests: Array<PullRequest>,
   builds: Array<Build>,
   actors: Array<Actor>,
   nextVersion: string,
   release: ?Release,
-};
+|};
 
 export const initialState: State = {
   release: null,
