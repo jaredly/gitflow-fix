@@ -183,7 +183,7 @@ const Actor = ({
     isActionApplicable(action, actor),
   );
   return (
-    <div style={{ alignItems: "flex-start", padding: 4 }}>
+    <div style={{ alignItems: "stretch", padding: 4 }}>
       <div
         style={{
           flexDirection: "row",
@@ -206,43 +206,44 @@ const Actor = ({
           ))}
         </div>
       </div>
-      <div style={{ marginTop: 8 }}>
-        {actor.type === "dev"
-          ? actor.env.localBranches.map(branch => (
-              <div
-                key={branch.name}
-                style={{
-                  padding: 4,
-                  cursor: "pointer",
-                  position: "relative",
-                  backgroundColor:
-                    selection &&
-                    selection.type === "branch" &&
-                    selection.branch === branch.name
-                      ? "#666"
-                      : "",
+      {actor.type === "dev" && actor.env.localBranches.length > 0 ? (
+        <div style={{ margin: 8, border: "1px solid #555", padding: 12 }}>
+          <div style={{ marginBottom: 8, ...styles.label }}>Branches:</div>
+          {actor.env.localBranches.map(branch => (
+            <div
+              key={branch.name}
+              style={{
+                padding: 4,
+                cursor: "pointer",
+                position: "relative",
+                backgroundColor:
+                  selection &&
+                  selection.type === "branch" &&
+                  selection.branch === branch.name
+                    ? "#666"
+                    : "",
+              }}
+              onClick={() => {
+                setSelection({
+                  type: "branch",
+                  branch: branch.name,
+                  owner: actor.name,
+                });
+              }}
+            >
+              {branch.name}
+              <ActionsBadge
+                state={state}
+                selection={{
+                  type: "branch",
+                  branch: branch.name,
+                  owner: actor.name,
                 }}
-                onClick={() => {
-                  setSelection({
-                    type: "branch",
-                    branch: branch.name,
-                    owner: actor.name,
-                  });
-                }}
-              >
-                {branch.name}
-                <ActionsBadge
-                  state={state}
-                  selection={{
-                    type: "branch",
-                    branch: branch.name,
-                    owner: actor.name,
-                  }}
-                />
-              </div>
-            ))
-          : null}
-      </div>
+              />
+            </div>
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 };
@@ -343,7 +344,7 @@ const ActionsBadge = ({ state, selection }) => {
         borderRadius: 4,
         position: "absolute",
         top: -4,
-        right: -8,
+        left: -8,
       }}
     >
       {applicable}
@@ -361,7 +362,7 @@ const PullRequests = ({
   const [showMerged, setShowMerged] = React.useState(false);
   const mergedCount = state.pullRequests.filter(p => p.merged).length;
   return (
-    <div style={{ width: 300, alignItems: "flex-start" }}>
+    <div style={{ width: 300, alignItems: "stretch" }}>
       <div
         style={{
           flexDirection: "row",
@@ -369,7 +370,7 @@ const PullRequests = ({
           marginBottom: 8,
         }}
       >
-        Pull Requests:
+        <div style={styles.label}>Pull Requests:</div>
         {mergedCount > 0 ? (
           <button
             style={{ marginLeft: 8 }}
