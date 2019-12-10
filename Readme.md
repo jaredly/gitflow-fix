@@ -4,13 +4,15 @@
   - [x] prioritize
   - [x] start
   - [x] pr
-  - [ ] review (accept)
-  - [ ] land
+  - [x] review (accept)
+  - [x] land
   - [ ] ready for qa
   - [ ] qa accept
+  - [ ] "done"
 - handle non-happy-path flows (rejected)
 - handle release process
--
+- handle feature branches
+  - have an button that just creates a branch and a bunch of issues
 
 # Old
 

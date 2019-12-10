@@ -82,9 +82,18 @@ export type Build = {
   prs: Array<number>,
 };
 
+export type RemoteBranch = {
+  commits: Array<{
+    pr: number,
+    ticket: ?number,
+  }>,
+  name: string,
+};
+
 export type State = {|
   tickets: Array<Ticket>,
   pullRequests: Array<PullRequest>,
+  remoteBranches: Array<RemoteBranch>,
   builds: Array<Build>,
   actors: Array<Actor>,
   nextVersion: string,
@@ -94,6 +103,12 @@ export type State = {|
 export const initialState: State = {
   release: null,
   builds: [],
+  remoteBranches: [
+    {
+      name: "develop",
+      commits: [],
+    },
+  ],
   tickets: [
     {
       id: 1,
@@ -106,6 +121,18 @@ export const initialState: State = {
       pullRequest: null,
       qeVerifiable: true,
       type: "bug",
+    },
+    {
+      id: 2,
+      title: "Implement the profile header",
+      status: "todo",
+      assignee: null,
+      fixVersion: null,
+      targetBranch: null,
+      deployUrl: null,
+      pullRequest: null,
+      qeVerifiable: true,
+      type: "task",
     },
   ],
   pullRequests: [],

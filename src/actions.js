@@ -12,8 +12,9 @@ import type {
 import type { BranchAction } from "./branch-actions";
 import type { TicketAction } from "./ticket-actions";
 import type { PrAction } from "./pr-actions";
+import type { CiAction } from "./ci-actions";
 
-export type Action = BranchAction | TicketAction | PrAction;
+export type Action = BranchAction | TicketAction | PrAction | CiAction;
 
 export type PMAction =
   | {
@@ -63,18 +64,18 @@ export type DevAction =
       branch: string,
     };
 
-export type CIAction =
-  | {
-      type: "build-nightly",
-    }
-  | {
-      type: "build-dogfood",
-      branch: string,
-    }
-  | {
-      type: "build-feature",
-      branch: string,
-    };
+// export type CIAction =
+//   | {
+//       type: "build-nightly",
+//     }
+//   | {
+//       type: "build-dogfood",
+//       branch: string,
+//     }
+//   | {
+//       type: "build-feature",
+//       branch: string,
+//     };
 
 export type QEAction =
   | {

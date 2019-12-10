@@ -7,7 +7,6 @@ export type PrAction = {
   owner: string,
 };
 
-// @flow
 import type {
   State,
   Ticket,
@@ -66,6 +65,16 @@ export const applyPrAction = (
     case "land":
       const tmp = {
         ...state,
+        remoteBranches: state.remoteBranches.map(branch =>
+          branch.name === pr.base
+            ? {
+                ...branch,
+                commits: branch.commits.concat([
+                  { pr: pr.number, ticket: pr.ticket },
+                ]),
+              }
+            : branch,
+        ),
         tickets: pr.ticket
           ? state.tickets.map(t =>
               t.id === pr.ticket

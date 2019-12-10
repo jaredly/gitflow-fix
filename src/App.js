@@ -13,6 +13,7 @@ import {
 import { type Action } from "./actions";
 import { ticketActions, applyTicketAction } from "./ticket-actions";
 import { branchActions, applyBranchAction } from "./branch-actions";
+import { ciActions, applyCiAction } from "./ci-actions";
 import { prActions, applyPrAction } from "./pr-actions";
 
 const Strut = ({ size }) => <div style={{ flexBasis: size }} />;
@@ -40,6 +41,7 @@ const Ticket = ({ ticket, onSelect, selection, state }) => {
         padding: "8px",
         fontSize: "80%",
         position: "relative",
+        marginBottom: 4,
         boxShadow:
           selection &&
           selection.type === "ticket" &&
@@ -106,6 +108,8 @@ function Columns({ state, setSelection, selection }) {
     </div>
   );
 }
+
+const generalActions = (state: State): Array<Action> => ciActions(state);
 
 const actionsForSelection = (
   state: State,
@@ -274,6 +278,8 @@ const reducer = (state: State, { action, who }) => {
       return applyBranchAction(who, action.branch, action.action, state);
     case "pr":
       return applyPrAction(who, action.number, action.action, state);
+    case "ci":
+      return applyCiAction(action.branch, action.action, state);
   }
   return state;
 };
@@ -445,7 +451,9 @@ function App() {
   );
   const [selection, setSelection] = React.useState(null);
   const state = outerState.states[outerState.position].contents;
-  const actions = actionsForSelection(state, selection); // todo include release & ci actions
+  const actions = actionsForSelection(state, selection).concat(
+    generalActions(state),
+  ); // todo include release & ci actions
   return (
     <div className="App">
       <div style={{ flexDirection: "row", alignItems: "flex-start" }}>
