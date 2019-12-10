@@ -1,12 +1,26 @@
+# Todo
+
+- get the ticket flow through the whole thing
+  - [x] prioritize
+  - [x] start
+  - [ ] pr
+  - [ ] review (reject/accept)
+  - [ ] land
+- handle non-happy-path flows
+
+# Old
 
 What is the state of the world?
+
 - tickets, in columns
+
   - status
   - fixversion
   - targetbranch
   - type (bug / software task)
 
 - github pull-requests
+
   - summary
   - review status (waiting, accepted, rejected)
   - base
@@ -14,6 +28,7 @@ What is the state of the world?
   - mergeable
 
 - local git repo
+
   - commits
   - branch
 

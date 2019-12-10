@@ -95,12 +95,14 @@ const actionsForSelection = (state: State, selection: ?Selection) => {
 
 const Actor = ({ state, actor, actions, takeAction }) => {
   const applicable = actions.filter(action => action.role === actor.type);
-  if (!applicable.length) {
-    return null;
-  }
+  // if (!applicable.length) {
+  //   return null;
+  // }
   return (
     <div>
-      <div>Actor: {actor.name}</div>
+      <div>
+        {actor.type}: {actor.name}
+      </div>
       <div>
         {applicable.map(action => (
           <div key={action.action}>

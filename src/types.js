@@ -19,7 +19,7 @@ export const statuses: Array<Status> = [
   "landed",
   "ready for qe",
   "qe rejected",
-  "done"
+  "done",
 ];
 
 export type Role = "pm" | "dev" | "qe";
@@ -35,7 +35,7 @@ export type Ticket = {
   deployUrl: ?string,
   pullRequest: ?number,
   qeVerifiable: boolean,
-  type: "bug" | "task"
+  type: "bug" | "task",
 };
 
 export type PullRequest = {
@@ -47,7 +47,7 @@ export type PullRequest = {
   merged: boolean,
   head: string,
   base: string,
-  mergeable: boolean
+  mergeable: boolean,
 };
 
 export type LocalBranch = {
@@ -55,31 +55,44 @@ export type LocalBranch = {
   pr: ?number,
   name: string,
   upstream: string,
-  parent: string
+  parent: string,
 };
 
 export type Selection =
   | {
       type: "ticket",
-      ticket: number
+      ticket: number,
     }
   | {
       type: "branch",
-      branch: string
+      branch: string,
     }
   | {
       type: "pr",
-      pr: number
+      pr: number,
     };
+
+export type Release = {
+  branch: string,
+};
+
+export type Build = {
+  id: number,
+  prs: Array<number>,
+};
 
 export type State = {
   tickets: Array<Ticket>,
   pullRequests: Array<PullRequest>,
+  builds: Array<Build>,
   actors: Array<Actor>,
-  nextVersion: string
+  nextVersion: string,
+  release: ?Release,
 };
 
 export const initialState: State = {
+  release: null,
+  builds: [],
   tickets: [
     {
       id: 1,
@@ -91,51 +104,51 @@ export const initialState: State = {
       deployUrl: null,
       pullRequest: null,
       qeVerifiable: true,
-      type: "bug"
-    }
+      type: "bug",
+    },
   ],
   pullRequests: [],
   actors: [
     {
       type: "dev",
       name: "jared",
-      env: { localBranches: [], activeBranch: "develop" }
+      env: { localBranches: [], activeBranch: "develop" },
     },
     {
       type: "dev",
       name: "lilli",
-      env: { localBranches: [], activeBranch: "develop" }
+      env: { localBranches: [], activeBranch: "develop" },
     },
     {
       type: "qe",
-      name: "robert"
+      name: "robert",
     },
     {
       type: "pm",
-      name: "susan"
-    }
+      name: "susan",
+    },
   ],
-  nextVersion: "7.0.0"
+  nextVersion: "7.0.0",
 };
 
 export type Actor =
   | {
       type: "dev",
       name: string,
-      env: DevEnv
+      env: DevEnv,
     }
   | {
       type: "pm",
-      name: string
+      name: string,
     }
   | {
       type: "qe",
-      name: string
+      name: string,
     };
 
 export type DevEnv = {
   localBranches: Array<LocalBranch>,
-  activeBranch: string
+  activeBranch: string,
 };
 
 // const findUnclaimedTicket = (state: State) => {
