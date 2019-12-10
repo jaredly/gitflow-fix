@@ -40,15 +40,20 @@ export const applyCiAction = (
   action: string,
   state: State,
 ): State => {
+  console.log("ok");
   switch (action) {
     case "build":
       const branch = state.remoteBranches.find(b => b.name === branchName);
       if (!branch) {
+        console.log("branch not found");
         return state;
       }
-      const coveredTickets = branch.commits.reduce((map, commit) =>
-        commit.ticket ? ((map[commit.ticket] = true), map) : map,
+      const coveredTickets = branch.commits.reduce(
+        (map, commit) =>
+          commit.ticket ? ((map[commit.ticket] = true), map) : map,
+        {},
       );
+      console.log(coveredTickets);
       return {
         ...state,
         tickets: state.tickets.map(ticket =>

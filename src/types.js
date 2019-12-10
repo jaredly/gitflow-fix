@@ -10,6 +10,7 @@ type Status =
   | "landed"
   | "ready for qe"
   | "qe rejected"
+  | "ready to release"
   | "done";
 export const statuses: Array<Status> = [
   "todo",
@@ -19,6 +20,7 @@ export const statuses: Array<Status> = [
   "landed",
   "ready for qe",
   "qe rejected",
+  "ready to release",
   "done",
 ];
 
@@ -167,6 +169,10 @@ export type Actor =
     }
   | {
       type: "pm",
+      name: string,
+    }
+  | {
+      type: "ci",
       name: string,
     }
   | {

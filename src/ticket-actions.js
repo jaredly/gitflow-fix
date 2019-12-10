@@ -29,9 +29,12 @@ export const ticketActions = (ticket: Ticket, state: State): Array<Action> => {
     actions.push({ title: "QE Accept", action: "accept", role: "qe" });
     actions.push({ title: "QE Reject", action: "reject", role: "qe" });
   }
+  if (ticket.status === "qe rejected") {
+    actions.push({ title: "Resume work", action: "resume", role: "dev" });
+  }
   if (ticket.status === "in progress" && ticket.assignee) {
     actions.push({
-      title: "Blocked",
+      title: "Set Blocked",
       action: "blocked",
       role: ticket.assignee,
     });
@@ -68,10 +71,48 @@ export const applyTicketAction = (
         ...ticket,
         fixVersion: state.nextVersion,
       });
+    case "accept":
+      return replaceTicket(state, id, {
+        ...ticket,
+        status: "ready to release",
+      });
+    case "reject":
+      return replaceTicket(state, id, { ...ticket, status: "qe rejected" });
     case "unblock":
       return replaceTicket(state, id, { ...ticket, status: "in progress" });
     case "blocked":
       return replaceTicket(state, id, { ...ticket, status: "blocked" });
+    case "resume":
+      if (who.type !== "dev") {
+        throw new Error("only devs can start on a ticket");
+      }
+      const newPerson = {
+        ...who,
+        env: {
+          ...who.env,
+          localBranches: who.env.localBranches.concat([
+            {
+              ticket: id,
+              pr: null,
+              name: "MOB-" + id,
+              upstream: "develop",
+              parent: "develop",
+            },
+          ]),
+        },
+      };
+      return replaceTicket(
+        {
+          ...state,
+          actors: state.actors.map(p => (p.name != who.name ? p : newPerson)),
+        },
+        id,
+        {
+          ...ticket,
+          status: "in progress",
+          assignee: who.name,
+        },
+      );
     case "start":
       if (who.type !== "dev") {
         throw new Error("only devs can start on a ticket");

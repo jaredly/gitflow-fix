@@ -23,6 +23,18 @@ const styles = {
     fontSize: "80%",
     color: "#ccc",
   },
+  flatButton: {
+    cursor: "pointer",
+    backgroundColor: "transparent",
+    border: "1px solid rgba(255,255,255,0.2)",
+    color: "white",
+  },
+  actionButton: {
+    cursor: "pointer",
+    border: "1px solid rgba(255,255,255,0.2)",
+    backgroundColor: "rgba(255,255,255,0.1)",
+    color: "#86ff8b",
+  },
 };
 
 const Ticket = ({ ticket, onSelect, selection, state }) => {
@@ -202,7 +214,7 @@ const Actor = ({
           {applicable.map(action => (
             <button
               key={action.action}
-              style={{ marginLeft: 8 }}
+              style={{ marginLeft: 8, ...styles.actionButton }}
               onClick={() => takeAction({ type: "actor", action, who: actor })}
             >
               {action.title}
@@ -235,7 +247,7 @@ const Actor = ({
                 });
               }}
             >
-              {branch.name}
+              {branch.name + " -> " + branch.parent}
               <ActionsBadge
                 state={state}
                 selection={{
@@ -284,14 +296,19 @@ const reducer = (state: State, { action, who }) => {
   return state;
 };
 
-type MultiAction = {
-  type: "state-history",
-  position: number,
-};
+type MultiAction =
+  | {
+      type: "state-history",
+      position: number,
+    }
+  | { type: "reset" };
 
 const multiReducer = inner => (state, action) => {
   if (action.type === "state-history") {
     return { ...state, position: action.position };
+  }
+  if (action.type === "reset") {
+    return { states: [makeMultiState(initialState)], position: 0 };
   }
   const newState = inner(state.states[state.position].contents, action);
   return {
@@ -379,7 +396,7 @@ const PullRequests = ({
         <div style={styles.label}>Pull Requests:</div>
         {mergedCount > 0 ? (
           <button
-            style={{ marginLeft: 8 }}
+            style={{ marginLeft: 8, ...styles.flatButton }}
             onClick={() => setShowMerged(!showMerged)}
           >
             {showMerged ? "Hide merged" : `Show ${mergedCount} merged`}
@@ -444,6 +461,45 @@ const tabOff = (node, offset, selector = null) => {
   }
 };
 
+const RemoteBranches = ({ state, actions, takeAction }) => {
+  return (
+    <div style={{ width: 300, padding: 0, marginLeft: 16 }}>
+      <div style={{ ...styles.label, marginBottom: 8 }}>Remote branches</div>
+      {state.remoteBranches.map(rb => (
+        <div
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {rb.name}
+          <span style={{ ...styles.label, marginLeft: 4 }}>
+            {rb.commits.length} commits
+          </span>
+          <Strut size={8} />
+          {actions
+            .filter(action => action.type === "ci" && action.branch === rb.name)
+            .map(action => (
+              <button
+                style={styles.actionButton}
+                onClick={() =>
+                  takeAction({
+                    type: "actor",
+                    who: { name: "ci", type: "ci" },
+                    action,
+                  })
+                }
+              >
+                {action.title}
+              </button>
+            ))}
+        </div>
+      ))}
+    </div>
+  );
+};
+
 function App() {
   const [outerState, dispatch] = React.useReducer(
     multiReducer(logger(reducer)),
@@ -457,10 +513,32 @@ function App() {
   return (
     <div className="App">
       <div style={{ flexDirection: "row", alignItems: "flex-start" }}>
-        <div style={{ width: 200, padding: 8 }}>
-          <button onClick={clearState}>Clear State</button>
-          <button onClick={() => saveStates(outerState)}>Save State</button>
-          <div>
+        <div style={{ width: 150, padding: 8 }}>
+          <div
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              marginBottom: 16,
+            }}
+          >
+            <button
+              style={styles.flatButton}
+              onClick={() => {
+                clearState();
+                dispatch({ type: "reset" });
+              }}
+            >
+              Clear
+            </button>
+            <Strut size={8} />
+            <button
+              style={styles.flatButton}
+              onClick={() => saveStates(outerState)}
+            >
+              Save
+            </button>
+          </div>
+          <div style={{ height: 400, overflow: "auto" }}>
             {outerState.states.map((inner, i) => (
               <div
                 className="state-item"
@@ -469,8 +547,10 @@ function App() {
                 onKeyDown={evt => {
                   if (evt.key === "ArrowDown") {
                     tabOff(evt.target, 1, ".state-item");
+                    evt.preventDefault();
                   } else if (evt.key === "ArrowUp") {
                     tabOff(evt.target, -1, ".state-item");
+                    evt.preventDefault();
                   }
                 }}
                 style={{
@@ -505,6 +585,11 @@ function App() {
               state={state}
               actions={actions}
               selection={selection}
+              takeAction={dispatch}
+            />
+            <RemoteBranches
+              state={state}
+              actions={actions}
               takeAction={dispatch}
             />
           </div>
