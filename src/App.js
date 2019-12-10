@@ -411,6 +411,17 @@ const PullRequests = ({
   );
 };
 
+const tabOff = (node, offset, selector = null) => {
+  const tabbable = [].slice.call(
+    document.querySelectorAll(selector || "[tabindex], button, input, a[href]"),
+  );
+  const idx = tabbable.indexOf(node);
+  const next = tabbable[idx + offset];
+  if (next) {
+    next.focus();
+  }
+};
+
 function App() {
   const [outerState, dispatch] = React.useReducer(
     multiReducer(logger(reducer)),
@@ -428,24 +439,14 @@ function App() {
           <div>
             {outerState.states.map((inner, i) => (
               <div
+                className="state-item"
                 key={i}
                 tabIndex={0}
-                // onFocus={() => }
-                // ref={node =>
-                //   i === outerState.position ? node && node.focus() : null
-                // }
                 onKeyDown={evt => {
-                  console.log(evt.key);
                   if (evt.key === "ArrowDown") {
-                    dispatch({
-                      type: "state-history",
-                      position: Math.min(i + 1, outerState.states.length - 1),
-                    });
+                    tabOff(evt.target, 1, ".state-item");
                   } else if (evt.key === "ArrowUp") {
-                    dispatch({
-                      type: "state-history",
-                      position: Math.max(0, i - 1),
-                    });
+                    tabOff(evt.target, -1, ".state-item");
                   }
                 }}
                 style={{
