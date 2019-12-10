@@ -182,9 +182,6 @@ const Actor = ({
   const applicable = actions.filter(action =>
     isActionApplicable(action, actor),
   );
-  // if (!applicable.length) {
-  //   return null;
-  // }
   return (
     <div style={{ alignItems: "flex-start", padding: 4 }}>
       <div
@@ -194,23 +191,20 @@ const Actor = ({
           alignSelf: "stretch",
         }}
       >
-        <div>
+        <div style={{ marginRight: 8 }}>
           {actor.type}: {actor.name}
         </div>
-        {applicable.map(action => (
-          <div
-            key={action.action}
-            style={{
-              flexDirection: "row",
-            }}
-          >
+        <div style={{ flexDirection: "row" }}>
+          {applicable.map(action => (
             <button
+              key={action.action}
+              style={{ marginLeft: 8 }}
               onClick={() => takeAction({ type: "actor", action, who: actor })}
             >
               {action.title}
             </button>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
       <div style={{ marginTop: 8 }}>
         {actor.type === "dev"
@@ -368,7 +362,13 @@ const PullRequests = ({
   const mergedCount = state.pullRequests.filter(p => p.merged).length;
   return (
     <div style={{ width: 300, alignItems: "flex-start" }}>
-      <div style={{ flexDirection: "row", justifyContent: "space-between" }}>
+      <div
+        style={{
+          flexDirection: "row",
+          justifyContent: "space-between",
+          marginBottom: 8,
+        }}
+      >
         Pull Requests:
         {mergedCount > 0 ? (
           <button
@@ -388,17 +388,32 @@ const PullRequests = ({
               style={{
                 position: "relative",
                 padding: 4,
+                flexDirection: "row",
+                paddingLeft: 8,
+                alignItems: "center",
                 cursor: "pointer",
                 backgroundColor:
                   selection &&
                   selection.type === "pr" &&
                   selection.pr === pr.number
-                    ? "#666"
+                    ? "#555"
                     : "",
               }}
             >
               {pr.summary}
-              <div style={{ padding: 4 }}>{pr.reviewStatus}</div>
+              <div
+                style={{
+                  padding: 4,
+                  marginLeft: 8,
+                  backgroundColor: {
+                    waiting: "#666",
+                    accepted: "#151",
+                    rejected: "#833",
+                  }[pr.reviewStatus],
+                }}
+              >
+                {pr.reviewStatus}
+              </div>
               <ActionsBadge
                 state={state}
                 selection={{ type: "pr", pr: pr.number }}

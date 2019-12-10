@@ -23,14 +23,14 @@ export const prActions = (pr: PullRequest, state: State): Array<Action> => {
   const actions = [];
   if (!pr.merged) {
     if (pr.reviewStatus !== "accepted") {
-      actions.push({ title: "Accept pull-request", action: "accept" });
+      actions.push({ title: "Accept", action: "accept" });
     }
     if (pr.reviewStatus !== "rejected") {
-      actions.push({ title: "Reject pull-request", action: "reject" });
+      actions.push({ title: "Reject", action: "reject" });
     }
   }
   if (pr.reviewStatus === "accepted" && !pr.merged) {
-    actions.push({ title: "Land pull-request", action: "land" });
+    actions.push({ title: "Land", action: "land" });
   }
   return actions.map(action => ({
     ...action,
