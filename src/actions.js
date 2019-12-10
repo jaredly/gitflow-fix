@@ -1,20 +1,62 @@
 // @flow
 
-export type Action =
-    | PMAction
-    | RelEngAction
-    | DevAction
-    | QEAction
-    | CIAction
+import type { State } from "./types";
+
+export const ticketActions = (
+  id: number,
+  state: State
+): Array<{
+  title: string,
+  type: "issue",
+  id: string,
+  action: string,
+  role: "pm" | "dev" | "qe"
+}> => {
+  const ticket = state.tickets.find(ticket => ticket.id === id);
+  if (!ticket) {
+    return [];
+  }
+  const actions = [];
+  if (!ticket.fixVersion) {
+    actions.push({ title: "Prioritize", action: "prioritize", role: "pm" });
+  }
+  if (!ticket.assignee) {
+    actions.push({ title: "Start work", action: "start", role: "dev" });
+  }
+  if (ticket.status === "ready for qe") {
+    actions.push({ title: "QE Accept", action: "accept", role: "qe" });
+    actions.push({ title: "QE Reject", action: "reject", role: "qe" });
+  }
+  return actions.map(action => ({ ...action, type: "issue", id }));
+};
+
+// export const branchActions
+
+export type IssueAction = {
+  issue: number,
+  action: "prioritize" | "start" | "accept" | "reject"
+};
+export type BranchAction = {
+  branch: string,
+  action:
+    | "pull-request"
+    | "land-feature"
+    | "pr-feature"
+    | "build-dogfood"
+    | "build-feature"
+};
+
+export type Action = PMAction | RelEngAction | DevAction | QEAction | CIAction;
 
 export type PMAction =
-    | {
-        type: 'prioritize',
-        issue: number
-    } | {
-        type: 'assign-next-fix-version',
-        issue: number,
+  | {
+      type: "prioritize",
+      issue: number
     }
+  | {
+      type: "assign-next-fix-version",
+      issue: number
+    };
 
 export type RelEngAction =
   | {

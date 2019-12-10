@@ -2,10 +2,30 @@
 
 // what is the state of the world?
 
-type Status = 'todo' | 'blocked' | 'in progress' | 'in review' | 'landed' | 'ready for qe' | 'qe rejected' | 'done'
-export const statuses: Array<Status> = ['todo' , 'blocked' , 'in progress' , 'in review' , 'landed' , 'ready for qe' , 'qe rejected' , 'done']
+type Status =
+  | "todo"
+  | "blocked"
+  | "in progress"
+  | "in review"
+  | "landed"
+  | "ready for qe"
+  | "qe rejected"
+  | "done";
+export const statuses: Array<Status> = [
+  "todo",
+  "blocked",
+  "in progress",
+  "in review",
+  "landed",
+  "ready for qe",
+  "qe rejected",
+  "done"
+];
 
-type Ticket = {
+export type Role = "pm" | "dev" | "qe";
+export const roles: Array<Role> = ["pm", "dev", "qe"];
+
+export type Ticket = {
   id: number,
   title: string,
   status: Status,
@@ -15,54 +35,72 @@ type Ticket = {
   deployUrl: ?string,
   pullRequest: ?number,
   qeVerifiable: boolean,
-  type: 'bug' | 'task',
-}
+  type: "bug" | "task"
+};
 
-type PullRequest = {
+export type PullRequest = {
   number: number,
-  summary: 'string',
-  reviewStatus: 'waiting' | 'accepted' | 'rejected',
+  summary: "string",
+  reviewStatus: "waiting" | "accepted" | "rejected",
   ticket: ?number,
   merged: boolean,
   head: string,
   base: string,
-  mergeable: boolean,
-}
+  mergeable: boolean
+};
 
-type LocalBranch = {
+export type LocalBranch = {
   ticket: ?number,
   pr: ?number,
   name: string,
   upstream: string,
-  parent: string,
-}
+  parent: string
+};
 
-type State = {
+export type Selection =
+  | {
+      type: "ticket",
+      ticket: number
+    }
+  | {
+      type: "branch",
+      branch: string
+    }
+  | {
+      type: "pr",
+      pr: number
+    };
+
+export type State = {
+  selection: ?Selection,
   tickets: Array<Ticket>,
   pullRequests: Array<PullRequest>,
-  localBranches: Array<LocalBranch>,
-}
+  localBranches: Array<LocalBranch>
+};
 
 export const initialState: State = {
-  tickets: [{
-    id: 1,
-    title: 'The frobulator doesn\'t display correctly',
-    status: 'todo',
-    assignee: null,
-    fixVersion: null,
-    targetBranch: null,
-    deployUrl: null,
-    pullRequest: null,
-    qeVerifiable: true,
-    type: 'bug',
-  }],
+  selection: null,
+  tickets: [
+    {
+      id: 1,
+      title: "The frobulator doesn't display correctly",
+      status: "todo",
+      assignee: null,
+      fixVersion: null,
+      targetBranch: null,
+      deployUrl: null,
+      pullRequest: null,
+      qeVerifiable: true,
+      type: "bug"
+    }
+  ],
   pullRequests: [],
-  localBranches: [],
+  localBranches: []
 };
 
 type Person = {
-  login: string,
-}
+  login: string
+};
 
 // const findUnclaimedTicket = (state: State) => {
 //   for (const ticket of state.tickets) {
