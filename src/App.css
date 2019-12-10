@@ -16,6 +16,7 @@ div {
   flex-direction: column;
   /* min-height: 0; */
   min-width: 0;
+  box-sizing: border-box;
 }
 
 /* .App-header {

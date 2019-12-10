@@ -14,7 +14,7 @@ export type TicketAction = {
   type: "ticket",
   id: number,
   action: string,
-  role: "pm" | "dev" | "qe",
+  role: "pm" | "dev" | "qe" | string,
 };
 
 export const ticketActions = (ticket: Ticket, state: State): Array<Action> => {
@@ -28,6 +28,20 @@ export const ticketActions = (ticket: Ticket, state: State): Array<Action> => {
   if (ticket.status === "ready for qe") {
     actions.push({ title: "QE Accept", action: "accept", role: "qe" });
     actions.push({ title: "QE Reject", action: "reject", role: "qe" });
+  }
+  if (ticket.status === "in progress" && ticket.assignee) {
+    actions.push({
+      title: "Blocked",
+      action: "blocked",
+      role: ticket.assignee,
+    });
+  }
+  if (ticket.status === "blocked" && ticket.assignee) {
+    actions.push({
+      title: "Unblock",
+      action: "unblock",
+      role: ticket.assignee,
+    });
   }
   return actions.map(action => ({ ...action, type: "ticket", id: ticket.id }));
 };
@@ -54,6 +68,10 @@ export const applyTicketAction = (
         ...ticket,
         fixVersion: state.nextVersion,
       });
+    case "unblock":
+      return replaceTicket(state, id, { ...ticket, status: "in progress" });
+    case "blocked":
+      return replaceTicket(state, id, { ...ticket, status: "blocked" });
     case "start":
       if (who.type !== "dev") {
         throw new Error("only devs can start on a ticket");
@@ -85,7 +103,7 @@ export const applyTicketAction = (
         {
           ...ticket,
           status: "in progress",
-          assignee: "me",
+          assignee: who.name,
         },
       );
   }

@@ -25,6 +25,11 @@ const styles = {
 };
 
 const Ticket = ({ ticket, onSelect, selection, state }) => {
+  const fields = [
+    ["Fix version", ticket.fixVersion],
+    ["Assignee", ticket.assignee],
+    ["Target branch", ticket.targetBranch],
+  ];
   return (
     <div
       onClick={onSelect}
@@ -45,8 +50,16 @@ const Ticket = ({ ticket, onSelect, selection, state }) => {
       <div style={styles.label}>{"MOB-" + ticket.id}</div>
       <Strut size={4} />
       {ticket.title}
-      <Strut size={4} />
-      <div style={styles.label}>Fix version: {ticket.fixVersion}</div>
+      {fields.map(([title, v]) =>
+        v != null ? (
+          <>
+            <Strut key={title + "-strut"} size={4} />
+            <div style={styles.label} key={title}>
+              {title}: {v}
+            </div>
+          </>
+        ) : null,
+      )}
       <ActionsBadge
         state={state}
         selection={{ type: "ticket", ticket: ticket.id }}
@@ -57,15 +70,16 @@ const Ticket = ({ ticket, onSelect, selection, state }) => {
 
 function Columns({ state, setSelection, selection }) {
   return (
-    <div style={{ padding: "4px", flexDirection: "row", height: 300 }}>
-      {statuses.map(status => (
+    <div style={{ padding: "8px", flexDirection: "row", height: 400 }}>
+      {statuses.map((status, i) => (
         <div
           key={status}
           style={{
             border: "1px solid #aaa",
-            margin: "4px",
-            padding: "8px",
-            width: 90,
+            borderWidth: i === 0 ? "1px" : "1px 1px 1px 0",
+            margin: 0,
+            padding: "4px",
+            width: 130,
           }}
         >
           <div style={{ textAlign: "center", marginBottom: "8px" }}>
@@ -138,7 +152,7 @@ const isActionApplicable = (action, actor) => {
     case "branch":
       return action.owner === actor.name;
     case "ticket":
-      return action.role === actor.type;
+      return action.role === actor.type || action.role === actor.name;
     case "pr":
       return (
         (action.owner === actor.name) === (action.action === "land") &&
@@ -160,7 +174,9 @@ const Actor = ({
   actions: Array<Action>,
   selection: ?Selection,
   setSelection: Selection => void,
-  takeAction: (action: { who: ActorT, action: Action }) => void,
+  takeAction: (
+    action: { type: "actor", who: ActorT, action: Action } | MultiAction,
+  ) => void,
 }) => {
   const applicable = actions.filter(action =>
     isActionApplicable(action, actor),
@@ -187,7 +203,9 @@ const Actor = ({
               flexDirection: "row",
             }}
           >
-            <button onClick={() => takeAction({ action, who: actor })}>
+            <button
+              onClick={() => takeAction({ type: "actor", action, who: actor })}
+            >
               {action.title}
             </button>
           </div>
@@ -264,6 +282,25 @@ const reducer = (state: State, { action, who }) => {
   return state;
 };
 
+type MultiAction = {
+  type: "state-history",
+  position: number,
+};
+
+const multiReducer = inner => (state, action) => {
+  if (action.type === "state-history") {
+    return { ...state, position: action.position };
+  }
+  const newState = inner(state.states[state.position].contents, action);
+  return {
+    ...state,
+    states: [makeMultiState(newState)].concat(
+      state.states.slice(state.position),
+    ),
+    position: 0,
+  };
+};
+
 const KEY = "gitflow-state";
 
 const logger = inner => (state, action) => {
@@ -273,10 +310,12 @@ const logger = inner => (state, action) => {
   return newState;
 };
 
-const getInitialState = () => {
+const makeMultiState = contents => ({ contents, date: Date.now(), name: null });
+
+const loadStates = () => {
   const raw = localStorage.getItem(KEY);
   if (!raw) {
-    return initialState;
+    return { states: [makeMultiState(initialState)], position: 0 };
   }
   return JSON.parse(raw);
 };
@@ -285,8 +324,8 @@ const clearState = () => {
   localStorage.removeItem(KEY);
 };
 
-const saveState = state => {
-  localStorage.setItem(KEY, JSON.stringify(state));
+const saveStates = states => {
+  localStorage.setItem(KEY, JSON.stringify(states));
 };
 
 const prAction = pr => action =>
@@ -324,71 +363,106 @@ const PullRequests = ({
   state,
   takeAction,
 }) => {
+  const [showMerged, setShowMerged] = React.useState(false);
+  const mergedCount = state.pullRequests.filter(p => p.merged).length;
   return (
-    <div style={{ minWidth: 300 }}>
-      Pull Requests:
-      <div>
-        {state.pullRequests.map(pr => (
-          <div
-            key={pr.number}
-            onClick={() => setSelection({ type: "pr", pr: pr.number })}
-            style={{
-              position: "relative",
-              padding: 4,
-              cursor: "pointer",
-              backgroundColor:
-                selection &&
-                selection.type === "pr" &&
-                selection.pr === pr.number
-                  ? "#666"
-                  : "",
-            }}
+    <div style={{ width: 300, alignItems: "flex-start" }}>
+      <div style={{ flexDirection: "row", justifyContent: "space-between" }}>
+        Pull Requests:
+        {mergedCount > 0 ? (
+          <button
+            style={{ marginLeft: 8 }}
+            onClick={() => setShowMerged(!showMerged)}
           >
-            {pr.summary}
-            <ActionsBadge
-              state={state}
-              selection={{ type: "pr", pr: pr.number }}
-            />
-          </div>
-        ))}
+            {showMerged ? "Hide merged" : `Show ${mergedCount} merged`}
+          </button>
+        ) : null}
+      </div>
+      <div>
+        {state.pullRequests.map(pr =>
+          !pr.merged || showMerged ? (
+            <div
+              key={pr.number}
+              onClick={() => setSelection({ type: "pr", pr: pr.number })}
+              style={{
+                position: "relative",
+                padding: 4,
+                cursor: "pointer",
+                backgroundColor:
+                  selection &&
+                  selection.type === "pr" &&
+                  selection.pr === pr.number
+                    ? "#666"
+                    : "",
+              }}
+            >
+              {pr.summary}
+              <ActionsBadge
+                state={state}
+                selection={{ type: "pr", pr: pr.number }}
+              />
+            </div>
+          ) : null,
+        )}
       </div>
     </div>
   );
 };
 
 function App() {
-  const [state, dispatch] = React.useReducer(
-    logger(reducer),
-    getInitialState(),
+  const [outerState, dispatch] = React.useReducer(
+    multiReducer(logger(reducer)),
+    loadStates(),
   );
-  console.log("state", state);
   const [selection, setSelection] = React.useState(null);
+  const state = outerState.states[outerState.position].contents;
   const actions = actionsForSelection(state, selection); // todo include release & ci actions
   return (
     <div className="App">
-      <button onClick={clearState}>Clear State</button>
-      <button onClick={() => saveState(state)}>Save State</button>
-      <Columns
-        state={state}
-        setSelection={setSelection}
-        selection={selection}
-      />
-      <div style={{ flexDirection: "row" }}>
-        <Actors
-          setSelection={setSelection}
-          state={state}
-          actions={actions}
-          selection={selection}
-          takeAction={dispatch}
-        />
-        <Strut size={32} />
-        <PullRequests
-          setSelection={setSelection}
-          state={state}
-          actions={actions}
-          selection={selection}
-          takeAction={dispatch}
-        />
+      <div style={{ flexDirection: "row", alignItems: "flex-start" }}>
+        <div style={{ width: 200, padding: 8 }}>
+          <button onClick={clearState}>Clear State</button>
+          <button onClick={() => saveStates(outerState)}>Save State</button>
+          <div>
+            {outerState.states.map((inner, i) => (
+              <div
+                key={i}
+                style={{
+                  padding: "4px 8px",
+                  cursor: "pointer",
+                  backgroundColor: i === outerState.position ? "#555" : "",
+                }}
+                onClick={() => dispatch({ type: "state-history", position: i })}
+              >
+                {new Date(inner.date).toLocaleTimeString()}
+              </div>
+            ))}
+          </div>
+        </div>
+        <div>
+          <Columns
+            state={state}
+            setSelection={setSelection}
+            selection={selection}
+          />
+          <div style={{ flexDirection: "row" }}>
+            <Actors
+              setSelection={setSelection}
+              state={state}
+              actions={actions}
+              selection={selection}
+              takeAction={dispatch}
+            />
+            <Strut size={32} />
+            <PullRequests
+              setSelection={setSelection}
+              state={state}
+              actions={actions}
+              selection={selection}
+              takeAction={dispatch}
+            />
+          </div>
+        </div>
       </div>
     </div>
   );

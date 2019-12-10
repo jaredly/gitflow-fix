@@ -70,6 +70,11 @@ export const applyBranchAction = (
               }
             : a,
         ),
+        tickets: branch.ticket
+          ? state.tickets.map(t =>
+              t.id === branch.ticket ? { ...t, status: "in review" } : t,
+            )
+          : state.tickets,
         pullRequests: state.pullRequests.concat([
           {
             owner: who.name,
