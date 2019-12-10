@@ -3,10 +3,14 @@
 - get the ticket flow through the whole thing
   - [x] prioritize
   - [x] start
-  - [ ] pr
-  - [ ] review (reject/accept)
+  - [x] pr
+  - [ ] review (accept)
   - [ ] land
-- handle non-happy-path flows
+  - [ ] ready for qa
+  - [ ] qa accept
+- handle non-happy-path flows (rejected)
+- handle release process
+-
 
 # Old
 

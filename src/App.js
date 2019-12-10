@@ -10,13 +10,10 @@ import {
   type Actor as ActorT,
 } from "./types";
 
-import {
-  ticketActions,
-  applyTicketAction,
-  branchActions,
-  applyBranchAction,
-  type Action,
-} from "./actions";
+import { type Action } from "./actions";
+import { ticketActions, applyTicketAction } from "./ticket-actions";
+import { branchActions, applyBranchAction } from "./branch-actions";
+import { prActions, applyPrAction } from "./pr-actions";
 
 const Strut = ({ size }) => <div style={{ flexBasis: size }} />;
 
@@ -111,6 +108,12 @@ const actionsForSelection = (
         return [];
       }
       return ticketActions(ticket, state);
+    case "pr":
+      const pr = state.pullRequests.find(pr => pr.number === selection.pr);
+      if (!pr) {
+        return [];
+      }
+      return prActions(pr, state);
     case "branch":
       const owner = state.actors.find(
         actor => actor.name === selection.owner && actor.type === "dev",
@@ -136,6 +139,11 @@ const isActionApplicable = (action, actor) => {
       return action.owner === actor.name;
     case "ticket":
       return action.role === actor.type;
+    case "pr":
+      return (
+        (action.owner === actor.name) === (action.action === "land") &&
+        actor.type === "dev"
+      );
   }
 };
 
@@ -250,6 +258,8 @@ const reducer = (state: State, { action, who }) => {
       return applyTicketAction(action.id, who, action.action, state);
     case "branch":
       return applyBranchAction(who, action.branch, action.action, state);
+    case "pr":
+      return applyPrAction(who, action.number, action.action, state);
   }
   return state;
 };
