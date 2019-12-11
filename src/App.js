@@ -43,6 +43,7 @@ const Ticket = ({ ticket, onSelect, selection, state }) => {
     ["Assignee", ticket.assignee],
     ["Target branch", ticket.targetBranch],
     ["Pull Request", ticket.pullRequest],
+    ["Build url", ticket.buildUrl],
   ];
   return (
     <div
@@ -85,7 +86,13 @@ const Ticket = ({ ticket, onSelect, selection, state }) => {
 
 function Columns({ state, setSelection, selection }) {
   return (
-    <div style={{ padding: "8px", flexDirection: "row", height: 400 }}>
+    <div
+      style={{
+        padding: "8px",
+        flexDirection: "row",
+        height: 300,
+      }}
+    >
       {statuses.map((status, i) => (
         <div
           key={status}
@@ -93,14 +100,14 @@ function Columns({ state, setSelection, selection }) {
             border: "1px solid #aaa",
             borderWidth: i === 0 ? "1px" : "1px 1px 1px 0",
             margin: 0,
-            padding: "4px",
             width: 130,
+            // overflow: "auto",
           }}
         >
-          <div style={{ textAlign: "center", marginBottom: "8px" }}>
+          <div style={{ textAlign: "center", marginBottom: "8px", padding: 4 }}>
             {status}
           </div>
-          <div>
+          <div style={{ flex: 1, overflow: "auto", padding: "4px" }}>
             {state.tickets
               .filter(ticket => ticket.status === status)
               .map(ticket => (
@@ -389,7 +396,8 @@ const PullRequests = ({
       <div
         style={{
           flexDirection: "row",
-          justifyContent: "space-between",
+          // justifyContent: "space-between",
+          alignItems: "center",
           marginBottom: 8,
         }}
       >
@@ -436,7 +444,7 @@ const PullRequests = ({
                   }[pr.reviewStatus],
                 }}
               >
-                {pr.reviewStatus}
+                {pr.merged ? "merged" : pr.reviewStatus}
               </div>
               <ActionsBadge
                 state={state}
@@ -462,9 +470,29 @@ const tabOff = (node, offset, selector = null) => {
 };
 
 const RemoteBranches = ({ state, actions, takeAction }) => {
+  const codeFreezeAction = actions.find(
+    a => a.type === "ci" && a.action === "code freeze",
+  );
+  console.log(actions);
   return (
     <div style={{ width: 300, padding: 0, marginLeft: 16 }}>
-      <div style={{ ...styles.label, marginBottom: 8 }}>Remote branches</div>
+      <div style={{ ...styles.label, marginBottom: 8, flexDirection: "row" }}>
+        Remote branches
+        {codeFreezeAction ? (
+          <button
+            style={{ ...styles.actionButton, marginLeft: 8 }}
+            onClick={() =>
+              takeAction({
+                type: "actor",
+                who: { name: "ci", type: "ci" },
+                action: codeFreezeAction,
+              })
+            }
+          >
+            {codeFreezeAction.title}
+          </button>
+        ) : null}
+      </div>
       {state.remoteBranches.map(rb => (
         <div
           style={{

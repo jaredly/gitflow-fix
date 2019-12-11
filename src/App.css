@@ -19,6 +19,11 @@ div {
   box-sizing: border-box;
 }
 
+/* .scrollable div {
+  min-height: 0;
+  min-width: 0;
+} */
+
 /* .App-header {
   background-color: #282c34;
   min-height: 100vh;

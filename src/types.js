@@ -24,6 +24,12 @@ export const statuses: Array<Status> = [
   "done",
 ];
 
+export const hasLanded = (status: Status) =>
+  status === "landed" ||
+  status === "ready for qe" ||
+  status === "qe rejected" ||
+  status === "ready to release";
+
 export type Role = "pm" | "dev" | "qe";
 export const roles: Array<Role> = ["pm", "dev", "qe"];
 
@@ -34,7 +40,7 @@ export type Ticket = {
   assignee: ?string,
   fixVersion: ?string,
   targetBranch: ?string,
-  deployUrl: ?string,
+  buildUrl: ?string,
   pullRequest: ?number,
   qeVerifiable: boolean,
   type: "bug" | "task",
@@ -119,7 +125,7 @@ export const initialState: State = {
       assignee: null,
       fixVersion: null,
       targetBranch: null,
-      deployUrl: null,
+      buildUrl: null,
       pullRequest: null,
       qeVerifiable: true,
       type: "bug",
@@ -131,7 +137,7 @@ export const initialState: State = {
       assignee: null,
       fixVersion: null,
       targetBranch: null,
-      deployUrl: null,
+      buildUrl: null,
       pullRequest: null,
       qeVerifiable: true,
       type: "task",
