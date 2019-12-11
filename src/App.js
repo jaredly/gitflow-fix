@@ -283,7 +283,7 @@ const Actor = ({
 
 const Actors = ({ state, actions, selection, setSelection, takeAction }) => {
   return (
-    <div style={{ height: 200, minWidth: 300, overflow: "auto" }}>
+    <div style={{ height: 400, minWidth: 300, overflow: "auto" }}>
       <div style={{ flexDirection: "row", flexWrap: "wrap" }}>
         {actions
           .filter(a => a.type === "creation")
