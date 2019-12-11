@@ -80,7 +80,7 @@ export const applyPrAction = (
               t.id === pr.ticket
                 ? {
                     ...t,
-                    status: "landed",
+                    status: t.qeVerifiable ? "landed" : "ready to release",
                     targetBranch: pr.base,
                   }
                 : t,

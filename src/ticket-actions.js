@@ -8,6 +8,7 @@ import type {
   LocalBranch,
 } from "./types";
 import type { Action } from "./actions";
+import { releaseBranch } from "./ci-actions";
 
 export type TicketAction = {
   title: string,
@@ -95,8 +96,8 @@ export const applyTicketAction = (
               ticket: id,
               pr: null,
               name: "MOB-" + id,
-              upstream: "develop",
-              parent: "develop",
+              upstream: ticket.targetBranch || "develop",
+              parent: ticket.targetBranch || "develop",
             },
           ]),
         },
@@ -110,6 +111,8 @@ export const applyTicketAction = (
         {
           ...ticket,
           status: "in progress",
+          buildUrl: null,
+          pr: null,
           assignee: who.name,
         },
       );
@@ -132,8 +135,12 @@ export const applyTicketAction = (
                         ticket: id,
                         pr: null,
                         name: "MOB-" + id,
-                        upstream: "develop",
-                        parent: "develop",
+                        upstream:
+                          ticket.targetBranch ||
+                          baseBranch(ticket.fixVersion, state),
+                        parent:
+                          ticket.targetBranch ||
+                          baseBranch(ticket.fixVersion, state),
                       },
                     ]),
                   },
@@ -150,4 +157,15 @@ export const applyTicketAction = (
   }
   console.log("action not recongized");
   return state;
+};
+
+const baseBranch = (fixVersion, state) => {
+  if (!fixVersion) {
+    return "develop";
+  }
+  const branch = releaseBranch(fixVersion);
+  if (state.remoteBranches.some(b => b.name === branch)) {
+    return branch;
+  }
+  return "develop";
 };

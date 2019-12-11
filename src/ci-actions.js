@@ -30,7 +30,9 @@ export const ciActions = (state: State): Array<Action> => {
   const actions = [];
   for (const branch of state.remoteBranches) {
     const activeTickets = branch.commits.some(
-      c => c.ticket != null && state.tickets.some(t => t.id === c.ticket),
+      c =>
+        c.ticket != null &&
+        state.tickets.some(t => t.id === c.ticket && !t.buildUrl),
     );
     if (activeTickets) {
       actions.push({
@@ -41,10 +43,25 @@ export const ciActions = (state: State): Array<Action> => {
     }
   }
   const currentReleaseBranch = releaseBranch(state.nextVersion);
+  const hasReleaseBranch = state.remoteBranches.some(
+    branch => branch.name === currentReleaseBranch,
+  );
   if (
-    !state.remoteBranches.some(
-      branch => branch.name === currentReleaseBranch,
-    ) &&
+    hasReleaseBranch &&
+    state.tickets.every(
+      ticket =>
+        ticket.targetBranch !== currentReleaseBranch ||
+        ticket.status === "ready to release",
+    )
+  ) {
+    actions.push({
+      branch: currentReleaseBranch,
+      action: "release",
+      title: "Release",
+    });
+  }
+  if (
+    !hasReleaseBranch &&
     state.tickets.some(ticket => readyForCodeFreeze(ticket, state))
   ) {
     actions.push({
@@ -63,6 +80,8 @@ const codeFreeze = (branchName: string, state: State) => {
       return {
         ...ticket,
         targetBranch: branchName,
+        fixVersion: state.nextVersion,
+        buildUrl: null,
         status: "landed",
       };
     } else {
@@ -82,6 +101,12 @@ const codeFreeze = (branchName: string, state: State) => {
   };
 };
 
+const incrVersion = v => {
+  const parts = v.split(".").map(m => parseInt(m));
+  parts[parts.length - 1] += 1;
+  return parts.map(m => m.toString()).join(".");
+};
+
 export const applyCiAction = (
   branchName: string,
   action: string,
@@ -90,6 +115,19 @@ export const applyCiAction = (
   switch (action) {
     case "code freeze":
       return codeFreeze(branchName, state);
+    case "release":
+      return {
+        ...state,
+        nextVersion: incrVersion(state.nextVersion),
+        tickets: state.tickets.map(ticket =>
+          ticket.targetBranch === branchName && hasLanded(ticket.status)
+            ? { ...ticket, status: "done" }
+            : ticket,
+        ),
+        remoteBranches: state.remoteBranches.filter(
+          branch => branch.name !== branchName,
+        ),
+      };
     case "build":
       const branch = state.remoteBranches.find(b => b.name === branchName);
       if (!branch) {

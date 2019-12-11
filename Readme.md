@@ -6,9 +6,9 @@
   - [x] pr
   - [x] review (accept)
   - [x] land
-  - [ ] ready for qa
-  - [ ] qa accept
-  - [ ] "done"
+  - [x] ready for qa
+  - [x] qa accept
+  - [x] "done"
 - handle non-happy-path flows (rejected)
 - handle release process
 - handle feature branches

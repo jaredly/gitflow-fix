@@ -13,6 +13,7 @@ import {
 import { type Action } from "./actions";
 import { ticketActions, applyTicketAction } from "./ticket-actions";
 import { branchActions, applyBranchAction } from "./branch-actions";
+import { creationActions, applyCreationAction } from "./creation-actions";
 import { ciActions, applyCiAction } from "./ci-actions";
 import { prActions, applyPrAction } from "./pr-actions";
 
@@ -90,7 +91,7 @@ function Columns({ state, setSelection, selection }) {
       style={{
         padding: "8px",
         flexDirection: "row",
-        height: 300,
+        height: 500,
       }}
     >
       {statuses.map((status, i) => (
@@ -128,7 +129,8 @@ function Columns({ state, setSelection, selection }) {
   );
 }
 
-const generalActions = (state: State): Array<Action> => ciActions(state);
+const generalActions = (state: State): Array<Action> =>
+  ciActions(state).concat(creationActions(state));
 
 const actionsForSelection = (
   state: State,
@@ -274,6 +276,24 @@ const Actor = ({
 const Actors = ({ state, actions, selection, setSelection, takeAction }) => {
   return (
     <div style={{ height: 200, minWidth: 300, overflow: "auto" }}>
+      <div style={{ flexDirection: "row", flexWrap: "wrap" }}>
+        {actions
+          .filter(a => a.type === "creation")
+          .map(action => (
+            <button
+              style={{ ...styles.actionButton, marginLeft: 8 }}
+              onClick={() =>
+                takeAction({
+                  type: "actor",
+                  who: { name: "ci", type: "ci" },
+                  action: action,
+                })
+              }
+            >
+              {action.title}
+            </button>
+          ))}
+      </div>
       {state.actors.map(actor => (
         <Actor
           setSelection={setSelection}
@@ -293,6 +313,8 @@ const reducer = (state: State, { action, who }) => {
   switch (action.type) {
     case "ticket":
       return applyTicketAction(action.id, who, action.action, state);
+    case "creation":
+      return applyCreationAction(action.action, state);
     case "branch":
       return applyBranchAction(who, action.branch, action.action, state);
     case "pr":
@@ -446,6 +468,9 @@ const PullRequests = ({
               >
                 {pr.merged ? "merged" : pr.reviewStatus}
               </div>
+              <div
+                style={{ ...styles.label, marginLeft: 8 }}
+              >{`pulls/${pr.number}`}</div>
               <ActionsBadge
                 state={state}
                 selection={{ type: "pr", pr: pr.number }}
@@ -470,28 +495,26 @@ const tabOff = (node, offset, selector = null) => {
 };
 
 const RemoteBranches = ({ state, actions, takeAction }) => {
-  const codeFreezeAction = actions.find(
-    a => a.type === "ci" && a.action === "code freeze",
-  );
-  console.log(actions);
   return (
     <div style={{ width: 300, padding: 0, marginLeft: 16 }}>
       <div style={{ ...styles.label, marginBottom: 8, flexDirection: "row" }}>
         Remote branches
-        {codeFreezeAction ? (
-          <button
-            style={{ ...styles.actionButton, marginLeft: 8 }}
-            onClick={() =>
-              takeAction({
-                type: "actor",
-                who: { name: "ci", type: "ci" },
-                action: codeFreezeAction,
-              })
-            }
-          >
-            {codeFreezeAction.title}
-          </button>
-        ) : null}
+        {actions.map(action =>
+          action.type === "ci" && action.action !== "build" ? (
+            <button
+              style={{ ...styles.actionButton, marginLeft: 8 }}
+              onClick={() =>
+                takeAction({
+                  type: "actor",
+                  who: { name: "ci", type: "ci" },
+                  action: action,
+                })
+              }
+            >
+              {action.title}
+            </button>
+          ) : null,
+        )}
       </div>
       {state.remoteBranches.map(rb => (
         <div
@@ -507,7 +530,12 @@ const RemoteBranches = ({ state, actions, takeAction }) => {
           </span>
           <Strut size={8} />
           {actions
-            .filter(action => action.type === "ci" && action.branch === rb.name)
+            .filter(
+              action =>
+                action.type === "ci" &&
+                action.branch === rb.name &&
+                action.action === "build",
+            )
             .map(action => (
               <button
                 style={styles.actionButton}

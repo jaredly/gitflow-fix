@@ -13,8 +13,14 @@ import type { BranchAction } from "./branch-actions";
 import type { TicketAction } from "./ticket-actions";
 import type { PrAction } from "./pr-actions";
 import type { CiAction } from "./ci-actions";
+import type { CreationAction } from "./creation-actions";
 
-export type Action = BranchAction | TicketAction | PrAction | CiAction;
+export type Action =
+  | BranchAction
+  | TicketAction
+  | PrAction
+  | CiAction
+  | CreationAction;
 
 export type PMAction =
   | {
