@@ -23,7 +23,7 @@ export const ticketActions = (ticket: Ticket, state: State): Array<Action> => {
   if (!ticket.fixVersion) {
     actions.push({ title: "Prioritize", action: "prioritize", role: "pm" });
   }
-  if (!ticket.assignee) {
+  if (!ticket.assignee && ticket.type !== "feature-test") {
     actions.push({ title: "Start work", action: "start", role: "dev" });
   }
   if (ticket.status === "ready for qe") {
@@ -159,7 +159,7 @@ export const applyTicketAction = (
   return state;
 };
 
-const baseBranch = (fixVersion, state) => {
+export const baseBranch = (fixVersion: ?string, state: State) => {
   if (!fixVersion) {
     return "develop";
   }

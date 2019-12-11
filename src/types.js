@@ -43,7 +43,7 @@ export type Ticket = {
   buildUrl: ?string,
   pullRequest: ?number,
   qeVerifiable: boolean,
-  type: "bug" | "task",
+  type: "bug" | "task" | "feature-test",
 };
 
 export type PullRequest = {

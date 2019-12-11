@@ -9,6 +9,7 @@ import type {
   LocalBranch,
 } from "./types";
 
+import type { FeatureBranchAction } from "./feature-branch-actions";
 import type { BranchAction } from "./branch-actions";
 import type { TicketAction } from "./ticket-actions";
 import type { PrAction } from "./pr-actions";
@@ -16,6 +17,7 @@ import type { CiAction } from "./ci-actions";
 import type { CreationAction } from "./creation-actions";
 
 export type Action =
+  | FeatureBranchAction
   | BranchAction
   | TicketAction
   | PrAction

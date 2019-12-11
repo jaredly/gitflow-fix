@@ -11,6 +11,10 @@ import {
 } from "./types";
 
 import { type Action } from "./actions";
+import {
+  featureBranchActions,
+  applyFeatureBranchAction,
+} from "./feature-branch-actions";
 import { ticketActions, applyTicketAction } from "./ticket-actions";
 import { branchActions, applyBranchAction } from "./branch-actions";
 import { creationActions, applyCreationAction } from "./creation-actions";
@@ -130,7 +134,9 @@ function Columns({ state, setSelection, selection }) {
 }
 
 const generalActions = (state: State): Array<Action> =>
-  ciActions(state).concat(creationActions(state));
+  ciActions(state)
+    .concat(creationActions(state))
+    .concat(featureBranchActions(state));
 
 const actionsForSelection = (
   state: State,
@@ -175,6 +181,8 @@ const actionsForSelection = (
 
 const isActionApplicable = (action, actor) => {
   switch (action.type) {
+    case "feature-branch":
+      return actor.type === "dev";
     case "branch":
       return action.owner === actor.name;
     case "ticket":
@@ -311,6 +319,8 @@ const Actors = ({ state, actions, selection, setSelection, takeAction }) => {
 
 const reducer = (state: State, { action, who }) => {
   switch (action.type) {
+    case "feature-branch":
+      return applyFeatureBranchAction(who, action.branch, action.action, state);
     case "ticket":
       return applyTicketAction(action.id, who, action.action, state);
     case "creation":
