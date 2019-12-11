@@ -73,6 +73,19 @@ export const applyTicketAction = (
         fixVersion: state.nextVersion,
       });
     case "accept":
+      if (ticket.type === "feature-test") {
+        return {
+          ...replaceTicket(state, id, {
+            ...ticket,
+            status: "ready to release",
+          }),
+          pullRequests: state.pullRequests.map(pr =>
+            pr.number === ticket.pullRequest
+              ? { ...pr, reviewStatus: "accepted" }
+              : pr,
+          ),
+        };
+      }
       return replaceTicket(state, id, {
         ...ticket,
         status: "ready to release",

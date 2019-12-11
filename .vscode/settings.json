@@ -3,5 +3,6 @@
     "gitlens.codeLens.enabled": false,
     "gitlens.codeLens.authors.enabled": false,
     "editor.formatOnSave": true,
-    "prettier.trailingComma": "all"
+    "prettier.trailingComma": "all",
+    "editor.tabSize": 2
 }

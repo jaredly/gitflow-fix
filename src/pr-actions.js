@@ -20,7 +20,7 @@ import type { Action } from "./actions";
 
 export const prActions = (pr: PullRequest, state: State): Array<Action> => {
   const actions = [];
-  if (!pr.merged) {
+  if (!pr.merged && !pr.head.startsWith("feature/")) {
     if (pr.reviewStatus !== "accepted") {
       actions.push({ title: "Accept", action: "accept" });
     }
@@ -63,6 +63,33 @@ export const applyPrAction = (
     case "accept":
       return replacePr(state, { ...pr, reviewStatus: "accepted" });
     case "land":
+      if (pr.head.startsWith("feature/")) {
+        const remoteBranch = state.remoteBranches.find(b => b.name === pr.head);
+        if (!remoteBranch) {
+          throw new Error(
+            `rtying to land nonexistent feature branch ${pr.head}`,
+          );
+        }
+        return {
+          ...replacePr(state, { ...pr, merged: true }),
+          tickets: pr.ticket
+            ? state.tickets.map(t =>
+                t.id === pr.ticket
+                  ? { ...t, status: "ready to release", targetBranch: pr.base }
+                  : t.targetBranch === pr.head
+                  ? { ...t, status: "ready to release", targetBranch: pr.base }
+                  : t,
+              )
+            : state.tickets,
+          remoteBranches: state.remoteBranches
+            .filter(b => b.name !== pr.head)
+            .map(b =>
+              b.name === pr.base
+                ? { ...b, commits: b.commits.concat(remoteBranch.commits) }
+                : b,
+            ),
+        };
+      }
       const tmp = {
         ...state,
         remoteBranches: state.remoteBranches.map(branch =>

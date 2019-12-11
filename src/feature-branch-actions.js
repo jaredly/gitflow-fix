@@ -49,23 +49,22 @@ export const applyFeatureBranchAction = (
   action: string,
   state: State,
 ): State => {
-  const fixVersion = state.tickets.reduce(
-    (v, t) => v || (t.targetBranch === branch ? t.fixVersion : null),
-    null,
-  );
-  const nextTicketNum =
-    state.tickets.reduce((max, t) => Math.max(max, t.id), 0) + 1;
-  const base = fixVersion ? baseBranch(fixVersion, state) : "develop";
   switch (action) {
     case "pr":
+      const fixVersion = state.tickets.reduce(
+        (v, t) => v || (t.targetBranch === branch ? t.fixVersion : null),
+        null,
+      );
+      const nextTicketNum =
+        state.tickets.reduce((max, t) => Math.max(max, t.id), 0) + 1;
+      const base = fixVersion ? baseBranch(fixVersion, state) : "develop";
+      const prNumber =
+        state.pullRequests.reduce((max, p) => Math.max(max, p.number), 0) + 1;
       return {
         ...state,
         pullRequests: state.pullRequests.concat([
           {
-            number: state.pullRequests.reduce(
-              (max, p) => Math.max(max, p.number),
-              0,
-            ),
+            number: prNumber,
             owner: who.name,
             summary: `Land ${branch}`,
             reviewStatus: "waiting",
@@ -81,11 +80,11 @@ export const applyFeatureBranchAction = (
             id: nextTicketNum,
             title: `Test feature ${branch}`,
             status: "ready for qe",
-            assignee: null,
+            assignee: who.name,
             fixVersion: null,
-            targetBranch: base,
+            targetBranch: branch,
             buildUrl: null,
-            pullRequest: null,
+            pullRequest: prNumber,
             qeVerifiable: true,
             type: "feature-test",
           },

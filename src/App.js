@@ -73,12 +73,12 @@ const Ticket = ({ ticket, onSelect, selection, state }) => {
       {ticket.title}
       {fields.map(([title, v]) =>
         v != null ? (
-          <>
+          <React.Fragment key={title}>
             <Strut key={title + "-strut"} size={4} />
             <div style={styles.label} key={title}>
               {title}: {v}
             </div>
-          </>
+          </React.Fragment>
         ) : null,
       )}
       <ActionsBadge
@@ -157,7 +157,7 @@ const actionsForSelection = (
     case "pr":
       const pr = state.pullRequests.find(pr => pr.number === selection.pr);
       if (!pr) {
-        return [];
+        throw new Error("Unknown pr sleection " + selection.pr);
       }
       return prActions(pr, state);
     case "branch":
@@ -287,8 +287,9 @@ const Actors = ({ state, actions, selection, setSelection, takeAction }) => {
       <div style={{ flexDirection: "row", flexWrap: "wrap" }}>
         {actions
           .filter(a => a.type === "creation")
-          .map(action => (
+          .map((action, i) => (
             <button
+              key={i}
               style={{ ...styles.actionButton, marginLeft: 8 }}
               onClick={() =>
                 takeAction({
@@ -481,10 +482,12 @@ const PullRequests = ({
               <div
                 style={{ ...styles.label, marginLeft: 8 }}
               >{`pulls/${pr.number}`}</div>
-              <ActionsBadge
-                state={state}
-                selection={{ type: "pr", pr: pr.number }}
-              />
+              {pr.merged ? null : (
+                <ActionsBadge
+                  state={state}
+                  selection={{ type: "pr", pr: pr.number }}
+                />
+              )}
             </div>
           ) : null,
         )}
@@ -509,9 +512,11 @@ const RemoteBranches = ({ state, actions, takeAction }) => {
     <div style={{ width: 300, padding: 0, marginLeft: 16 }}>
       <div style={{ ...styles.label, marginBottom: 8, flexDirection: "row" }}>
         Remote branches
-        {actions.map(action =>
-          action.type === "ci" && action.action !== "build" ? (
+        {actions
+          .filter(action => action.type === "ci" && action.action !== "build")
+          .map((action, i) => (
             <button
+              key={i}
               style={{ ...styles.actionButton, marginLeft: 8 }}
               onClick={() =>
                 takeAction({
@@ -523,11 +528,11 @@ const RemoteBranches = ({ state, actions, takeAction }) => {
             >
               {action.title}
             </button>
-          ) : null,
-        )}
+          ))}
       </div>
       {state.remoteBranches.map(rb => (
         <div
+          key={rb.name}
           style={{
             flexDirection: "row",
             alignItems: "center",
@@ -546,8 +551,9 @@ const RemoteBranches = ({ state, actions, takeAction }) => {
                 action.branch === rb.name &&
                 action.action === "build",
             )
-            .map(action => (
+            .map((action, i) => (
               <button
+                key={i}
                 style={styles.actionButton}
                 onClick={() =>
                   takeAction({

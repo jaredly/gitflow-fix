@@ -22,17 +22,23 @@ import type { Action } from "./actions";
 export const releaseBranch = (version: string) => `release/unified/${version}`;
 
 const readyForCodeFreeze = (ticket, state: State) =>
-  ticket.fixVersion === state.nextVersion &&
+  (!ticket.fixVersion || ticket.fixVersion === state.nextVersion) &&
   ticket.targetBranch === "develop" &&
   hasLanded(ticket.status);
 
 export const ciActions = (state: State): Array<Action> => {
   const actions = [];
   for (const branch of state.remoteBranches) {
-    const activeTickets = branch.commits.some(
-      c =>
-        c.ticket != null &&
-        state.tickets.some(t => t.id === c.ticket && !t.buildUrl),
+    // const activeTickets = branch.commits.some(
+    //   c =>
+    //     c.ticket != null &&
+    //     state.tickets.some(t => t.id === c.ticket && !t.buildUrl),
+    // );
+    const activeTickets = state.tickets.some(
+      t =>
+        t.targetBranch === branch.name &&
+        !t.buildUrl &&
+        t.type !== "feature-test",
     );
     if (activeTickets) {
       actions.push({
@@ -136,22 +142,31 @@ export const applyCiAction = (
       }
       const buildNumber =
         state.builds.reduce((max, build) => Math.max(max, build.id), 0) + 1;
-      const coveredTickets = branch.commits.reduce(
-        (map, commit) =>
-          commit.ticket ? ((map[commit.ticket] = true), map) : map,
-        {},
-      );
+      // const coveredTickets = branch.commits.reduce(
+      //   (map, commit) =>
+      //     commit.ticket ? ((map[commit.ticket] = true), map) : map,
+      //   {},
+      // );
       return {
         ...state,
         builds: state.builds.concat([{ id: buildNumber, prs: [] }]),
         tickets: state.tickets.map(ticket => {
+          if (!hasLanded(ticket.status)) {
+            return ticket;
+          }
           if (ticket.targetBranch !== branchName) {
             return ticket;
           }
-          if (ticket.status === "landed" && coveredTickets[ticket.id]) {
+          // if (ticket.type === "feature-test") {
+          //   const pr = state.pullRequests.find(pr => pr.ticket === ticket.id);
+          //   if (!pr || pr.head !== branchName) {
+          //     return ticket;
+          //   }
+          // }
+          if (ticket.status === "landed") {
             return {
               ...ticket,
-              status: "ready for qe",
+              status: ticket.qeVerifiable ? "ready for qe" : "ready to release",
               buildUrl: `bitrise.com/build/${buildNumber}`,
             };
           } else if (ticket.status !== "done") {
